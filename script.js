@@ -28,8 +28,14 @@ function renderGrid(data) {
     grid.innerHTML = data.map(book => {
         // Sanitize ISBN for Open Library API
         const isbn = book.ISBN ? book.ISBN.replace(/[^0-9X]/gi, '') : '';
-        const coverUrl = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false` : '';
+        const coverUrl = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false` : ''
+        return `
+            <div class="book-card" onclick="showDetails('${isbn}')" style="cursor:pointer;">
+                ... existing card HTML ...
+            </div>
+        `;
 
+        
         return `
             <div class="book-card">
                 <div class="cover-wrapper">
@@ -61,4 +67,49 @@ function searchCatalog() {
     });
 
     renderGrid(filtered);
+
+// Details page
+
+async function showDetails(isbn) {
+    const grid = document.getElementById('catalog-grid');
+    const detailsView = document.getElementById('details-view');
+    const detailsContent = document.getElementById('details-content');
+
+    // Toggle visibility
+    grid.style.display = 'none';
+    detailsView.style.display = 'block';
+    detailsContent.innerHTML = "Fetching description...";
+
+    try {
+        // Search Open Library by ISBN to get the "Work ID"
+        const searchRes = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+        const searchData = await searchRes.json();
+        const bookData = searchData[`ISBN:${isbn}`];
+
+        if (bookData) {
+            detailsContent.innerHTML = `
+                <div class="details-layout">
+                    <img src="${bookData.cover?.large || ''}" class="details-cover">
+                    <div class="details-text">
+                        <h2>${bookData.title}</h2>
+                        <p><strong>Published:</strong> ${bookData.publish_date || 'N/A'}</p>
+                        <p><strong>Pages:</strong> ${bookData.number_of_pages || 'N/A'}</p>
+                        <hr>
+                        <p>${bookData.notes || "No description available in Open Library."}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            detailsContent.innerHTML = "Book details not found in Open Library database.";
+        }
+    } catch (err) {
+        detailsContent.innerHTML = "Error loading details.";
+    }
+}
+
+function showGrid() {
+    document.getElementById('catalog-grid').style.display = 'grid';
+    document.getElementById('details-view').style.display = 'none';
+}
+    
 }
