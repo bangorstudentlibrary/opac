@@ -1,2 +1,2 @@
-# opac
-The searchable Bangor Student Library Catalogue
+# Bangor Student Library - OPAC
+The searchable Bangor Student Library catalogue.
